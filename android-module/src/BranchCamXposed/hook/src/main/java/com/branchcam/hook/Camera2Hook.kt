@@ -3,7 +3,6 @@ package com.branchcam.hook
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.OutputConfiguration
-import android.hardware.camera2.params.SessionConfiguration
 import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
@@ -99,13 +98,17 @@ class Camera2Hook(
             XposedHelpers.findAndHookMethod(
                 camera.javaClass,
                 "createCaptureSession",
-                SessionConfiguration::class.java,
+                "android.hardware.camera2.params.SessionConfiguration",
                 object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam) {
-                        val sessionCfg = param.args[0] as? SessionConfiguration ?: return
-                        // Extract surfaces from OutputConfigurations
-                        val surfaces = sessionCfg.outputConfigurations
-                            .mapNotNull { it.surface }
+                        val sessionCfg = param.args.firstOrNull() ?: return
+                        // Reflect over API 28+ types so the hook module can still load on API 26–27.
+                        val outputs = sessionCfg.javaClass
+                            .getMethod("getOutputConfigurations")
+                            .invoke(sessionCfg) as? List<*> ?: return
+                        val surfaces = outputs.mapNotNull { output ->
+                            output?.javaClass?.getMethod("getSurface")?.invoke(output) as? Surface
+                        }
                         startInjecting(surfaces)
                     }
                 }

@@ -149,7 +149,7 @@
                     <!-- 16:9 preview box -->
                     <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="0dp"
+                        android:layout_height="200dp"
                         android:layout_marginBottom="12dp"
                         android:background="@drawable/preview_bg"
                         android:clipToOutline="true">
@@ -250,7 +250,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="?attr/colorOnSurfaceVariant" />
+                        app:tint="?attr/colorOnSurfaceVariant" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -408,7 +408,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="?attr/colorOnSurfaceVariant" />
+                        app:tint="?attr/colorOnSurfaceVariant" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

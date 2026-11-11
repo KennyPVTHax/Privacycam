@@ -1,20 +1,17 @@
 package com.branchcam.xposed.ui
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.provider.Settings
+import android.provider.OpenableColumns
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import com.branchcam.hook.LicenseManager
 import com.branchcam.xposed.Prefs
 import com.branchcam.xposed.R
@@ -29,21 +26,18 @@ class MainActivity : AppCompatActivity() {
 
     // ── Video picker launcher ──────────────────────────────────────────────
     private val pickVideo = registerForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri == null) return@registerForActivityResult
-        val realPath = getRealPathFromUri(uri) ?: uri.toString()
-        prefs.edit().putString(Prefs.KEY_VIDEO, realPath).apply()
-        refreshVideoUI(realPath)
+        try {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            Toast.makeText(this, "Unable to keep access to this video", Toast.LENGTH_LONG).show()
+            return@registerForActivityResult
+        }
+        prefs.edit().putString(Prefs.KEY_VIDEO, uri.toString()).apply()
+        refreshVideoUI(uri.toString())
         Toast.makeText(this, "Video selected ✓", Toast.LENGTH_SHORT).show()
-    }
-
-    // ── Permission launcher ────────────────────────────────────────────────
-    private val requestPerm = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) launchVideoPicker()
-        else Toast.makeText(this, "Storage permission needed to pick a video", Toast.LENGTH_LONG).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,7 +49,10 @@ class MainActivity : AppCompatActivity() {
         // Store device ID for cross-process license check
         @SuppressLint("HardwareIds")
         val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""
-        prefs.edit().putString("device_id", androidId).apply()
+        prefs.edit()
+            .putString("device_id", androidId)
+            .putBoolean("hook_active_self_test", false)
+            .apply()
 
         setupStatusCard()
         setupToggle()
@@ -132,19 +129,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermAndPick() {
-        val perm = if (Build.VERSION.SDK_INT >= 33)
-            Manifest.permission.READ_MEDIA_VIDEO
-        else
-            Manifest.permission.READ_EXTERNAL_STORAGE
-
-        if (ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
-            launchVideoPicker()
-        } else {
-            requestPerm.launch(perm)
-        }
+        launchVideoPicker()
     }
 
-    private fun launchVideoPicker() = pickVideo.launch("video/*")
+    private fun launchVideoPicker() = pickVideo.launch(arrayOf("video/*"))
 
     private fun refreshVideoUI(path: String?) {
         if (path.isNullOrEmpty()) {
@@ -155,19 +143,43 @@ class MainActivity : AppCompatActivity() {
         } else {
             b.videoPreview.visibility    = View.VISIBLE
             b.videoPlaceholder.visibility = View.GONE
-            b.videoFilename.text          = path.substringAfterLast("/")
+            b.videoFilename.text          = getVideoDisplayName(path)
             b.btnClearVideo.isEnabled     = true
 
-            // Load thumbnail — URI may be stale on reinstall, guard it
+            // Validate persisted URI access before handing it to VideoView.
             try {
-                b.videoPreview.setVideoURI(Uri.parse(path))
+                val uri = Uri.parse(path)
+                contentResolver.openAssetFileDescriptor(uri, "r")?.use { }
+                    ?: throw IllegalStateException("Selected video is no longer available")
+                b.videoPreview.setOnErrorListener { _, _, _ ->
+                    b.videoPreview.visibility = View.GONE
+                    b.videoPlaceholder.visibility = View.VISIBLE
+                    b.videoFilename.text = "Selected video cannot be played"
+                    true
+                }
+                b.videoPreview.setVideoURI(uri)
                 b.videoPreview.start()
             } catch (_: Exception) {
-                // URI no longer accessible — clear the stale entry
                 prefs.edit().remove(Prefs.KEY_VIDEO).apply()
                 refreshVideoUI(null)
             }
         }
+    }
+
+    private fun getVideoDisplayName(path: String): String {
+        val uri = Uri.parse(path)
+        if (uri.scheme == "content") {
+            try {
+                contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (index >= 0) cursor.getString(index)?.let { return it }
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+        return uri.lastPathSegment?.let(Uri::decode)?.substringAfterLast('/')
+            ?.takeIf { it.isNotBlank() } ?: "Selected video"
     }
 
     // ── License card ──────────────────────────────────────────────────────
@@ -259,15 +271,4 @@ class MainActivity : AppCompatActivity() {
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
-    @Suppress("DEPRECATION")
-    private fun getRealPathFromUri(uri: Uri): String? {
-        return try {
-            contentResolver.query(uri, arrayOf(MediaStore.Video.Media.DATA), null, null, null)?.use { c ->
-                if (c.moveToFirst()) {
-                    val idx = c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
-                    c.getString(idx)
-                } else null
-            }
-        } catch (_: Exception) { uri.toString() }
-    }
 }

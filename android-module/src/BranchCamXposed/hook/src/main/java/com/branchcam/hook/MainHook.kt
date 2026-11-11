@@ -1,10 +1,13 @@
 package com.branchcam.hook
 
+import android.app.Activity
 import android.annotation.SuppressLint
 import android.provider.Settings
 import de.robv.android.xposed.IXposedHookLoadPackage
+import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
+import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 /**
@@ -28,7 +31,30 @@ class MainHook : IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        if (lpparam.packageName == PREFS_PKG) return
+        if (lpparam.packageName == PREFS_PKG) {
+            // Report real framework injection in the companion process. The
+            // companion clears the marker on creation; this callback restores
+            // it only when LSPosed actually intercepts its lifecycle method.
+            try {
+                XposedHelpers.findAndHookMethod(
+                    "com.branchcam.xposed.ui.MainActivity",
+                    lpparam.classLoader,
+                    "onResume",
+                    object : XC_MethodHook() {
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            val activity = param.thisObject as? Activity ?: return
+                            activity.getSharedPreferences(PREFS_FILE, Activity.MODE_PRIVATE)
+                                .edit()
+                                .putBoolean("hook_active_self_test", true)
+                                .apply()
+                        }
+                    }
+                )
+            } catch (t: Throwable) {
+                XposedBridge.log("[$TAG] Could not install companion activation check: ${t.message}")
+            }
+            return
+        }
 
         // Android 14+ compatible XSharedPreferences
         // LSPosed handles cross-process access via its own mechanism
