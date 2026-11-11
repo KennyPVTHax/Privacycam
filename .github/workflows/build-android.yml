@@ -27,23 +27,38 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      - name: Grant Gradle execute permission
-        run: chmod +x android-module/src/BranchCamXposed/gradlew
+      - name: Set up Gradle 8.6
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.6'
 
-      - name: Build Release APK
+      - name: Install Android API 34
+        run: sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
+
+      - name: Build Debug and Release APKs
         working-directory: android-module/src/BranchCamXposed
-        run: ./gradlew assembleRelease --no-daemon
+        run: gradle :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BranchCam-LSPosed-Debug-APK
+          path: android-module/src/BranchCamXposed/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BranchCam-LSPosed-APK
+          name: BranchCam-LSPosed-Release-APK
           path: android-module/src/BranchCamXposed/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
           retention-days: 30
 
-      - name: Upload Hook APK
+      - name: Upload Hook AAR
         uses: actions/upload-artifact@v4
         with:
-          name: BranchCam-Hook-APK
-          path: android-module/src/BranchCamXposed/hook/build/outputs/apk/release/*.apk
+          name: BranchCam-Hook-AAR
+          path: android-module/src/BranchCamXposed/hook/build/outputs/aar/*.aar
+          if-no-files-found: error
           retention-days: 30
