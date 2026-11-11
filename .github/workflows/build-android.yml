@@ -37,7 +37,7 @@ jobs:
 
       - name: Build Debug and Release APKs
         working-directory: android-module/src/BranchCamXposed
-        run: gradle :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
+        run: gradle :app:assembleDebug :app:assembleRelease :hook:assembleRelease --no-daemon --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
