@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.branchcam.hook.LicenseManager
 import com.branchcam.xposed.Prefs
+import com.branchcam.xposed.SelectedVideoProvider
 import com.branchcam.xposed.R
 import com.branchcam.xposed.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity() {
             return@registerForActivityResult
         }
         prefs.edit().putString(Prefs.KEY_VIDEO, uri.toString()).apply()
+        SelectedVideoProvider.syncGrants(this)
         refreshVideoUI(uri.toString())
         Toast.makeText(this, "Video selected ✓", Toast.LENGTH_SHORT).show()
     }
@@ -64,6 +66,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        SelectedVideoProvider.syncGrants(this)
         refreshStatusCard()
         refreshVideoUI(prefs.getString(Prefs.KEY_VIDEO, null))
         refreshAppCount()
@@ -76,10 +79,8 @@ class MainActivity : AppCompatActivity() {
     private fun setupStatusCard() = refreshStatusCard()
 
     private fun refreshStatusCard() {
-        // If this code is running, we ARE the companion app.
-        // The hook module cannot hook itself, so we check via a sentinel:
-        // BranchCam writes "hook_active" = true from the hook; if the pref
-        // isn't set the module isn't loaded (or not targeting us).
+        // The legacy LSPosed callback writes this marker from our onResume
+        // hook. A normal app launch cannot set it.
         val active = prefs.getBoolean("hook_active_self_test", false)
         if (active) {
             b.statusChip.text = "● Module Active"
@@ -122,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnClearVideo.setOnClickListener {
             prefs.edit().remove(Prefs.KEY_VIDEO).apply()
+            SelectedVideoProvider.syncGrants(this)
             refreshVideoUI(null)
         }
 

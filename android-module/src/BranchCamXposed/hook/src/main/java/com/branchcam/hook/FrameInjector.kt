@@ -1,5 +1,6 @@
 package com.branchcam.hook
 
+import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Handler
@@ -8,17 +9,17 @@ import android.view.Surface
 import de.robv.android.xposed.XposedBridge
 
 /**
- * Feeds a video file into a Camera2 output [Surface] using MediaPlayer.
+ * Feeds a video file into the app's original [Surface] using MediaPlayer.
  *
  * MediaPlayer can render decoded frames directly onto a Surface — the same
- * Surface the app is using as a camera output.  When we set the target surface
- * on MediaPlayer and call play(), the app's camera preview starts showing
- * our video instead of the real camera feed.
+ * Camera2Hook redirects the camera output to a separate drained reader before
+ * this player takes ownership of the app surface.
  *
  * If [videoUri] is empty we fall back to a solid-black placeholder rendered
  * via a background thread pushing dummy frames so the Surface stays "alive."
  */
 class FrameInjector(
+    private val context: Context,
     private val surface: Surface,
     private val videoUri: String
 ) {
@@ -40,7 +41,10 @@ class FrameInjector(
         mp = player
         try {
             player.setSurface(surface)
-            player.setDataSource(videoUri)
+            if (videoUri.startsWith("content://"))
+                player.setDataSource(context, Uri.parse(videoUri))
+            else
+                player.setDataSource(videoUri)
             player.isLooping = true
             player.setOnErrorListener { _, what, extra ->
                 XposedBridge.log("[$tag] MediaPlayer error: what=$what extra=$extra — falling back")

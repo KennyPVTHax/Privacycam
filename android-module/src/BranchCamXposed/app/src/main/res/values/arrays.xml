@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="xposed_scope">
-        <item>*</item>
+        <item>com.branchcam.xposed</item>
+        <item>com.branchcam.cameratest</item>
     </string-array>
 </resources>

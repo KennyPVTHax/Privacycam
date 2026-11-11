@@ -14,6 +14,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.branchcam.xposed.Prefs
+import com.branchcam.xposed.SelectedVideoProvider
 import com.branchcam.xposed.R
 import com.branchcam.xposed.databinding.ActivityAppPickerBinding
 import kotlinx.coroutines.Dispatchers
@@ -101,7 +102,8 @@ class AppPickerActivity : AppCompatActivity() {
 
     private fun saveSelection() {
         val json = JSONArray(selected.toList()).toString()
-        prefs.edit().putString(Prefs.KEY_APPS, if (selected.isEmpty()) "[]" else json).apply()
+        prefs.edit().putString(Prefs.KEY_APPS, if (selected.isEmpty()) "[]" else json).commit()
+        SelectedVideoProvider.syncGrants(this)
     }
 
     // ── RecyclerView Adapter ───────────────────────────────────────────────

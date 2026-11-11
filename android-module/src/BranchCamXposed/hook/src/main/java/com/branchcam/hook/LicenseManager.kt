@@ -94,7 +94,8 @@ object LicenseManager {
 
             // 1. Device binding check
             val myHash = hashDeviceId(androidId)
-            if (deviceHash != myHash) return LicenseResult(false, error = "DEVICE_MISMATCH")
+            if (deviceHash != myHash && deviceHash != hashDeviceIdLegacy(androidId))
+                return LicenseResult(false, error = "DEVICE_MISMATCH")
 
             // 2. Expiry check
             val now = System.currentTimeMillis() / 1000L
@@ -117,7 +118,12 @@ object LicenseManager {
      * Same logic, for use in the companion app (using regular context).
      */
     fun verifyFromApp(ctx: Context): LicenseResult {
-        val prefs = ctx.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+        @Suppress("DEPRECATION")
+        val prefs = try {
+            ctx.getSharedPreferences(PREFS_FILE, Context.MODE_WORLD_READABLE)
+        } catch (_: SecurityException) {
+            ctx.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+        }
         val encodedKey = prefs.getString(KEY_LICENSE, "") ?: ""
         if (encodedKey.isEmpty()) return LicenseResult(false, error = "NO_KEY")
 
@@ -134,7 +140,8 @@ object LicenseManager {
             val tierStr    = parts[2]
 
             val myHash = hashDeviceId(androidId)
-            if (deviceHash != myHash) return LicenseResult(false, error = "DEVICE_MISMATCH")
+            if (deviceHash != myHash && deviceHash != hashDeviceIdLegacy(androidId))
+                return LicenseResult(false, error = "DEVICE_MISMATCH")
 
             val now = System.currentTimeMillis() / 1000L
             if (now > expiry) return LicenseResult(false, error = "EXPIRED")
@@ -164,9 +171,14 @@ object LicenseManager {
         } catch (e: Throwable) { null }
     }
 
-    fun hashDeviceId(androidId: String): String {
+    fun hashDeviceId(androidId: String): String = hashDeviceIdWithSalt(androidId, "BC_SALT_")
+
+    private fun hashDeviceIdLegacy(androidId: String): String =
+        hashDeviceIdWithSalt(androidId, "FC_SALT_")
+
+    private fun hashDeviceIdWithSalt(androidId: String, salt: String): String {
         val md = MessageDigest.getInstance("SHA-256")
-        val salted = "BC_SALT_$androidId"
+        val salted = "$salt$androidId"
         val bytes = md.digest(salted.toByteArray(Charsets.UTF_8))
         return bytes.joinToString("") { "%02x".format(it) }.take(32)
     }

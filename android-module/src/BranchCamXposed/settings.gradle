@@ -10,6 +10,12 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Verified Xposed API 82 artifact (SHA-256 F48C635F1C7469FDEC0E00AD2EA0B7A6B2F5B55065784A35B7CA3A84615E8E25).
+        // Compile-only; LSPosed supplies the API at runtime.
+        maven {
+            url = uri("$settingsDir/gradle/xposed-api")
+            content { includeGroup("de.robv.android.xposed") }
+        }
         maven {
             url = uri("https://api.xposed.info/")
             content { includeGroup("de.robv.android.xposed") }
