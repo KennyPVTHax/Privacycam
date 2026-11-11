@@ -158,9 +158,15 @@ class MainActivity : AppCompatActivity() {
             b.videoFilename.text          = path.substringAfterLast("/")
             b.btnClearVideo.isEnabled     = true
 
-            // Load thumbnail
-            b.videoPreview.setVideoURI(Uri.parse(path))
-            b.videoPreview.start()
+            // Load thumbnail — URI may be stale on reinstall, guard it
+            try {
+                b.videoPreview.setVideoURI(Uri.parse(path))
+                b.videoPreview.start()
+            } catch (_: Exception) {
+                // URI no longer accessible — clear the stale entry
+                prefs.edit().remove(Prefs.KEY_VIDEO).apply()
+                refreshVideoUI(null)
+            }
         }
     }
 

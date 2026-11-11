@@ -15,9 +15,10 @@ object Prefs {
 
     private const val FILE = MainHook.PREFS_FILE
 
-    @Suppress("DEPRECATION")
+    // MODE_PRIVATE — LSPosed reads hook prefs via XSharedPreferences
+    // internally; MODE_WORLD_READABLE throws SecurityException on Android 7+.
     fun get(ctx: Context): SharedPreferences =
-        ctx.getSharedPreferences(FILE, Context.MODE_WORLD_READABLE)
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
     // Keys
     const val KEY_ENABLED = MainHook.KEY_ENABLED
