@@ -30,8 +30,16 @@ class MainHook : IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         if (lpparam.packageName == PREFS_PKG) return
 
+        // Android 14+ compatible XSharedPreferences
+        // LSPosed handles cross-process access via its own mechanism
         val prefs = XSharedPreferences(PREFS_PKG, PREFS_FILE)
-        prefs.makeWorldReadable()
+        // makeWorldReadable() is a no-op on Android 14+ but LSPosed
+        // grants cross-process read access automatically for modules
+        @Suppress("DEPRECATION")
+        try { prefs.makeWorldReadable() } catch (_: Exception) {}
+
+        // Force reload to get latest values
+        prefs.reload()
 
         if (!prefs.getBoolean(KEY_ENABLED, false)) return
 
@@ -52,7 +60,6 @@ class MainHook : IXposedHookLoadPackage {
 
         // ── Resolve video for this app ─────────────────────────────────────
         val videoUri = if (license.tier == LicenseManager.Tier.PRO) {
-            // PRO: per-app video override
             PerAppConfig.getVideoForPackage(prefs, lpparam.packageName)
         } else {
             prefs.getString(KEY_VIDEO, "") ?: ""
@@ -69,12 +76,14 @@ class MainHook : IXposedHookLoadPackage {
     }
 
     /**
-     * We need ANDROID_ID but we're running in the hooked app's process.
-     * We read it from prefs (companion app writes it on launch)
-     * rather than calling Settings.Secure directly (avoids context issues).
+     * Read ANDROID_ID from prefs — companion app writes it on each launch.
+     * Avoids needing a Context inside the hooked process.
      */
     private fun getAndroidId(lpparam: XC_LoadPackage.LoadPackageParam): String {
-        val prefs = XSharedPreferences(PREFS_PKG, PREFS_FILE)
-        return prefs.getString("device_id", "") ?: ""
+        return try {
+            val p = XSharedPreferences(PREFS_PKG, PREFS_FILE)
+            p.reload()
+            p.getString("device_id", "") ?: ""
+        } catch (_: Exception) { "" }
     }
 }
