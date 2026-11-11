@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BranchCam</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 320px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0f0f13;
+    color: #e0e0e0;
+    padding: 16px;
+  }
+  .header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ff4444;
+    box-shadow: 0 0 6px #ff4444;
+  }
+  .dot.active { background: #44ff88; box-shadow: 0 0 6px #44ff88; }
+  h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+  .badge {
+    margin-left: auto; font-size: 11px; padding: 2px 8px;
+    border-radius: 20px; background: #1e1e2e; color: #888;
+  }
+  .badge.on { background: #0d2b1a; color: #44ff88; }
+
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #1a1a24; border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 12px;
+  }
+  .toggle-label { font-size: 13px; color: #ccc; }
+  .switch { position: relative; width: 40px; height: 22px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #333; border-radius: 22px;
+    transition: .3s;
+  }
+  .slider:before {
+    content: ""; position: absolute;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; bottom: 3px; left: 3px;
+    transition: .3s;
+  }
+  input:checked + .slider { background: #44ff88; }
+  input:checked + .slider:before { transform: translateX(18px); background: #0f0f13; }
+
+  .section { margin-bottom: 12px; }
+  .section-label { font-size: 11px; color: #666; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 6px; }
+
+  .video-box {
+    background: #1a1a24; border-radius: 10px;
+    padding: 10px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .preview {
+    width: 100%; aspect-ratio: 16/9;
+    background: #111; border-radius: 6px;
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+  }
+  .preview video { width: 100%; height: 100%; object-fit: cover; }
+  .preview-placeholder {
+    color: #444; font-size: 12px; text-align: center; padding: 20px;
+  }
+
+  .btn {
+    display: block; width: 100%;
+    padding: 9px; border-radius: 8px;
+    border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    transition: opacity .2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #5a5aff; color: #fff; }
+  .btn-danger  { background: #2a1818; color: #ff6666; }
+
+  .filename {
+    font-size: 11px; color: #555; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .info {
+    background: #1a1a24; border-radius: 8px; padding: 10px 12px;
+    font-size: 11px; color: #666; line-height: 1.6;
+    margin-top: 4px;
+  }
+  .info b { color: #aaa; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="dot" id="dot"></div>
+  <h1>BranchCam</h1>
+  <span class="badge" id="badge">OFF</span>
+</div>
+
+<div class="toggle-row">
+  <span class="toggle-label">Privacy Shield</span>
+  <label class="switch">
+    <input type="checkbox" id="toggle">
+    <span class="slider"></span>
+  </label>
+</div>
+
+<div class="section">
+  <div class="section-label">Fake Video Source</div>
+  <div class="video-box">
+    <div class="preview" id="preview">
+      <div class="preview-placeholder" id="placeholder">
+        No video selected<br><small>Default: animated pattern</small>
+      </div>
+      <video id="prevVid" autoplay loop muted playsinline style="display:none"></video>
+    </div>
+    <div class="filename" id="filename">—</div>
+    <button class="btn btn-primary" id="pickBtn">📂 Select Video</button>
+    <button class="btn btn-danger" id="clearBtn">✕ Remove (use pattern)</button>
+  </div>
+</div>
+
+<div class="info">
+  <b>How it works:</b> When any site requests your camera,
+  FakeCam returns your chosen video instead — site never sees your real face or room.
+  Real mic still works (audio passes through).
+  <br><br><b>Access / Support:</b> DM <b style="color:#5a5aff">@PolsBranch</b> on Telegram
+</div>
+
+<input type="file" id="filePicker" accept="video/*" style="display:none">
+
+<script src="popup.js"></script>
+</body>
+</html>

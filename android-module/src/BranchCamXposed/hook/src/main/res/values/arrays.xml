@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- xposedscope: packages this module is allowed to hook.
+         "*" means all packages — LSPosed shows this list in its module settings.
+         Users can further restrict per-app inside LSPosed itself. -->
+    <string-array name="xposed_scope">
+        <item>*</item>
+    </string-array>
+</resources>

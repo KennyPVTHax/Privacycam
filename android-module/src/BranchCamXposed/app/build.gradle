@@ -1,0 +1,55 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+android {
+    namespace   = "com.branchcam.xposed"
+    compileSdk  = 34
+
+    defaultConfig {
+        applicationId       = "com.branchcam.xposed"
+        minSdk              = 26
+        targetSdk           = 34
+        versionCode         = 1
+        versionName         = "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
+}
+
+dependencies {
+    // The hook module is bundled as an aar dependency
+    // so the companion app and hook ship as a single APK
+    implementation(project(":hook"))
+
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.fragment)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.lifecycle.vm)
+    implementation(libs.coil)             // image/video thumbnail loading
+
+    // Xposed API stubs (compile-only — framework provides at runtime)
+    compileOnly(libs.xposed.api)
+}

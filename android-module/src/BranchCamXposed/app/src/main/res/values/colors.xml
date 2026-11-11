@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material You dark seed palette — purple/indigo tones -->
+    <color name="md_theme_primary">#B6C4FF</color>
+    <color name="md_theme_on_primary">#002782</color>
+    <color name="md_theme_primary_container">#003DAD</color>
+    <color name="md_theme_on_primary_container">#DCE1FF</color>
+    <color name="md_theme_secondary">#C1C5DD</color>
+    <color name="md_theme_on_secondary">#2B2F42</color>
+    <color name="md_theme_tertiary">#DDB9D6</color>
+    <color name="md_theme_surface">#131318</color>
+    <color name="md_theme_on_surface">#E4E1E9</color>
+    <color name="md_theme_surface_variant">#45464F</color>
+    <color name="md_theme_on_surface_variant">#C6C5D0</color>
+    <color name="md_theme_error">#FFB4AB</color>
+    <color name="md_theme_on_error">#690005</color>
+
+    <!-- Chip state colors -->
+    <color name="chip_active">#1A3A2A</color>
+    <color name="chip_inactive">#2A1A1A</color>
+</resources>

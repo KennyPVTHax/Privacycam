@@ -1,0 +1,46 @@
+name: Build BranchCam Android Module
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'android-module/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant Gradle execute permission
+        run: chmod +x android-module/src/BranchCamXposed/gradlew
+
+      - name: Build Release APK
+        working-directory: android-module/src/BranchCamXposed
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BranchCam-LSPosed-APK
+          path: android-module/src/BranchCamXposed/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Upload Hook APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BranchCam-Hook-APK
+          path: android-module/src/BranchCamXposed/hook/build/outputs/apk/release/*.apk
+          retention-days: 30
