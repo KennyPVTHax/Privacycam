@@ -49,7 +49,7 @@ AES_IV = bytes([
     0x4B, 0x56, 0x12, 0x4D,
 ])  # 16 bytes — must match IV_OBF ^ 0x5A in LicenseManager.kt
 
-SALT = "FC_SALT_"  # must match hashDeviceId() in LicenseManager.kt
+SALT = "BC_SALT_"  # must match hashDeviceId() in LicenseManager.kt
 # ══════════════════════════════════════════════════════════════════════════════
 
 

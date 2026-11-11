@@ -3,7 +3,7 @@ package com.branchcam.hook
 import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
-import de.robv.android.xposed.XposedBridge
+// XposedBridge only available in hook process — use safe wrapper below
 import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
@@ -108,7 +108,7 @@ object LicenseManager {
 
             LicenseResult(true, tier, expiry)
         } catch (e: Throwable) {
-            XposedBridge.log("[BranchCam] License verify error: ${e.message}")
+            try { de.robv.android.xposed.XposedBridge.log("[BranchCam] License verify error: ${e.message}") } catch (_: Throwable) {}
             LicenseResult(false, error = "EXCEPTION")
         }
     }
@@ -166,7 +166,7 @@ object LicenseManager {
 
     fun hashDeviceId(androidId: String): String {
         val md = MessageDigest.getInstance("SHA-256")
-        val salted = "FC_SALT_$androidId"
+        val salted = "BC_SALT_$androidId"
         val bytes = md.digest(salted.toByteArray(Charsets.UTF_8))
         return bytes.joinToString("") { "%02x".format(it) }.take(32)
     }
