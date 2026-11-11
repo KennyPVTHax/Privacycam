@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'android-module/**'
+      - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
 jobs:
