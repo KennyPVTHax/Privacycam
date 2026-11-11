@@ -2,7 +2,7 @@ name: Build BranchCam Android Module
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature/compatibility-preservation-20261112 ]
     paths:
       - 'android-module/**'
       - '.github/workflows/build-android.yml'
