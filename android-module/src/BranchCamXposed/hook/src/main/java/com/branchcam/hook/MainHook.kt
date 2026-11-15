@@ -92,6 +92,15 @@ class MainHook : IXposedHookLoadPackage {
         }
 
         XposedBridge.log("[$TAG] Hooking camera for: ${lpparam.packageName} [${license.tier}]")
+
+        // ── Aadhaar / UIDAI extra bypass layer ────────────────────────────
+        // Patches NativeSecurity (ADB + root checks), Location.isFromMockProvider,
+        // and PackageManager queries for virtual-camera apps.
+        if (AadhaarHook.isUidaiPackage(lpparam.packageName)) {
+            XposedBridge.log("[$TAG] UIDAI package detected — installing Aadhaar bypass hooks")
+            AadhaarHook(lpparam.classLoader).install()
+        }
+
         Camera2Hook(lpparam.classLoader, videoUri).install()
     }
 
